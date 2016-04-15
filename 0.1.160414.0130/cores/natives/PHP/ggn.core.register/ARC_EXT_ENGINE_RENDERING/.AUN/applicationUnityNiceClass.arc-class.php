@@ -1,0 +1,688 @@
+<?php
+/*
+	Copyright GOBOU Y. Yannick
+======================================================
+	CLASS applicationUnityNiceARC
+	PAGE cores/_natives/PHP/Register.core.g/ARC_ENGINE_RENDING/.AUN/applicationUsingNodes.arc-class.php
+======================================================
+
+	Moteur de rendu AUN(Application Unity Nice)
+	
+*/
+/*
+	CLASS 'applicationUnityNiceARC'
+*/
+
+class applicationUnityNiceARC extends Render{
+	
+	
+	const LTN = 'AUN';
+	const LTN_IMPORT = 'import';
+	const LTN_APPLI = 'application';
+	
+	
+	
+	var $aunapp = '.aunsa';
+	var $path;
+	var $file;
+	var $lang;
+	var $docTitle;
+	// var $syntaxes = array();
+	// var $tags = array();
+	
+	
+	/* Variables Transcription */
+	var $GougnonJSFramework = false;
+	var $AUNJSFramework = false;
+	var $toImports=array();
+	var $toTranscript=array();
+	
+	var $AUN = array();
+	var $APP = array();
+	
+	var $CSSLibOutPut = array();
+	var $HTMLLibOutPut = array();
+	var $PHPLibOutPut = array();
+	var $JSLibOutPut = array();
+	
+	var $PHPFileOutPut = array();
+	var $CSSFileOutPut = array();
+	var $JSFileOutPut = array();
+	var $HTMLFileOutPut = array();
+	var $CSSCodeOutPut = array();
+	var $JSCodeOutPut = array();
+	
+	var $AUNPkgOutPut = array();
+	var $AUNCodeOutPut = array();
+	
+	var $GGCSSPkgOutPut = array();
+	var $GGCSSCodeOutPut = array();
+	var $GGJSPkgOutPut = array();
+	var $GGJSCodeOutPut = array();
+	
+	var $bodyOutPut = array();
+	var $bodyOutPutMode = array();
+	
+	var $sourcesCode = array();
+	
+	
+	public function __construct(){
+		global $GLANG;
+		$this->syslang = $GLANG;
+		$this->arguments = func_get_args();
+		$this->file = $this->arguments[0];
+		$this->path = dirname($this->file) . '/';
+		$this->lang = _native::loadLang(_LANG_ . '/AUN.ini');
+		}
+		
+	protected function initialize(){
+		// $this->syntaxes['name'] = array();
+		// $this->syntaxes['input'] = array();
+		// $this->syntaxes['output'] = array();
+		// $this->syntaxes['type'] = array();
+		// $this->initializeSyntaxes();
+		$this->dom = new DOMDocument();
+		$this->sources = self::fileSources($this->file);
+		$this->loaded = self::loadFile($this->dom, $this->file);
+		$this->GougnonJSFramework = 'framework-1.0';
+		$this->GougnonCSSFramework = 'framework-1.0';
+		$this->AUNJSFramework = 'framework-1.0';
+		$this->AUNCSSFramework = 'framework-1.0';
+		return $this;
+		}
+		
+		
+		
+		
+		
+	public function startEngine(){
+		
+		$this->initialize();
+			if($this->loaded===TRUE){
+				// echo $this->sources;
+				$this->rending = $this->xEngine();
+				
+				
+				/* lib PHP */
+				// $this->addToSourcesCode('echo $this->file;');
+				$this->addToSourcesCode($this->rending->getPHPLibOutPut());
+				$this->addToSourcesCode($this->rending->getPHPFileOutPut());
+				
+				
+				/* Entete Head */
+				$this->sourcesHead = '';
+				$this->sourcesHead .= 'self::write(\'<script type="text/javascript">document.oncontextmenu=function(){return false;};</script>\');';
+				$this->sourcesHead .= $this->rending->getDOCTitle();
+				$this->sourcesHead .= $this->rending->getGGCSSPkgOutPut();
+				$this->sourcesHead .= $this->rending->getCSSLibOutPut();
+				$this->sourcesHead .= $this->rending->getCSSCodeOutPut();
+				
+				
+				/* Entete Head */
+				$this->sourcesBody = '';
+				$this->sourcesBody .= $this->rending->getGGJSPkgOutPut();
+				$this->sourcesBody .= $this->rending->getGGJSCodeOutPut();
+				$this->sourcesBody .= $this->rending->getAUNPkgOutPut();
+				$this->sourcesBody .= $this->rending->getAUNCodeOutPut();
+				$this->sourcesBody .= $this->rending->getJSLibOutPut();
+				$this->sourcesBody .= $this->rending->getHTMLLibOutPut();
+				$this->sourcesBody .= $this->rending->getHTMLFileOutPut();
+				$this->sourcesBody .= $this->rending->getJSCodeOutPut();
+
+				$this->sourcesBody .= $this->startBodyScript();
+				$this->sourcesBody .= $this->getBodyOutPut();
+				$this->sourcesBody .= $this->stopBodyScript();
+				
+				
+				$this->addToSourcesCode(self::nativeHTMLProtected('html', $this->sourcesHead,  $this->sourcesBody));
+
+				
+				// echo(implode('', $this->sourcesCode) ); exit(0);
+				try{
+					eval(implode('', $this->sourcesCode) .' exit(0);');
+					$AUNErrorMessage = $this->lang['ENGINE']['ERROR_RENDING'];
+					throw new Exception($AUNErrorMessage);
+					}
+				catch(Exception $e){
+					self::wCnsl(self::inivar('ERROR', $php_errormsg, $e->getMessage()));
+					}
+				
+				}
+			if($this->loaded!==TRUE){
+				self::wCnsl(self::inivar('FILE','AUN',$this->syslang['FILES']['LOADING_FAILED']));
+				}
+		return $this;
+		}
+	
+	
+	
+	
+	
+	/* Balise */
+	// protected function addTags($name, $input, $output, $type){
+		// array_push($this->tags['name'], $input);
+		// array_push($this->tags['input'], $input);
+		// array_push($this->tags['output'], $output);
+		// array_push($this->tags['type'], $type);
+		// return $this;
+		// }
+		
+	// protected function initializeTags(){
+		// $this->addTags('import', 'file', 'aun.import($1);', self::TAG_ATTRIBUT);
+		// return $this;
+		// }
+		
+	
+	
+	
+	// /* Syntaxe */
+	// protected function addSyntaxe($name, $input, $output, $type){
+		// array_push($this->syntaxes['name'], $input);
+		// array_push($this->syntaxes['input'], $input);
+		// array_push($this->syntaxes['output'], $output);
+		// array_push($this->syntaxes['type'], $type);
+		// return $this;
+		// }
+		
+	// protected function initializeSyntaxes(){
+		// $this->addSyntaxe('call', '/call (.*);/m', 'AUN._call($1);', self::T_EF);
+		// return $this;
+		// }
+		
+
+
+
+	/* Rendu */
+	protected function xEngine(){
+		
+		$this->_validate();
+			if($this->AUN['validate']!=TRUE){_native::wCnsl($this->lang['ENGINE']['VALIDATE_INAVAILABLE']);}
+		$this->_getAppNodes();
+		$this->getAUNVars();
+		$this->getAUNAttributes();
+			if($this->AUN['appExists']!=TRUE){_native::wCnsl($this->lang['ENGINE']['APP_NOT_FOUND']);}
+			// if($this->AUN['startOnAppExists']!=TRUE){_native::wCnsl($this->lang['ENGINE']['FIRST_APP_NOT_FOUND']);}
+		// $this->mainNode = $this->AUNNodes['CHILDNODES']['APPLICATION'][0]['NODES']['MAIN'][0];
+		$this->_loadManifest();
+		$this->docVersion = $this->AUN['rootAttributes']['version'];
+		// $this->mainChildNodes = $this->AUNNodes['CHILDNODES']['APPLICATION'][0]['CHILDNODES']['MAIN'][0];
+		
+		$this->applicationFile = $this->AUN['rootAttributes']['application'] . $this->aunapp;
+		
+		
+		// echo '<pre>';
+			// print_r($this->applicationInfos['about']);
+		// echo '</pre>';
+		// exit(0);
+		
+		/* Fichier à importer  ->  Transcription du main */
+		return $this->initializeImports()->getFilesToImport()->getDocumentExtendsDatas()->setSplashScripts();
+		// ->initializeTranscription();
+		// ->setTranscription();
+		}
+	
+	
+	
+	/* TRANSCRIPTION */
+	private function startBodyScript(){return 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="script-environment">\');';}
+	private function stopBodyScript(){return 'self::write(\'</SCRIPT>\');';}
+	
+	protected function getDocumentExtendsDatas(){
+		$this->docTitle = ($this->APP['title']===FALSE)?'Application Sans Titre': $this->APP['title']->nodeValue;
+		$this->docTitle = (Gougnon::isEmpty($this->docTitle))?'Application Sans Titre': $this->docTitle;
+		return $this;}
+		
+	protected function setSplashScripts(){
+		
+		$scripts = '';
+		$scripts .= 'AUN.environment.initialize({';
+		
+			$scripts .= 'appFile:"'.$this->applicationFile.'" ';
+			$scripts .= ',appTitle:"'.self::toJSDocWrite($this->docTitle).'" ';
+			
+			$scripts .= ',splahScreen:'.((isset($this->applicationSplashScreenAttrib))
+				?'Gou.A('.((isset($this->applicationSplashScreenAttrib['type']))?'"'.$this->applicationSplashScreenAttrib['type'].'"':'false')
+					.','.((isset($this->applicationSplashScreenAttrib['href']))?'"'.$this->applicationSplashScreenAttrib['href'].'"':'false')
+					.')': 'false');
+					
+			$scripts .= ',shortcutIcon:'.((isset($this->applicationIconAttrib))
+				?'Gou.A("'.((isset($this->applicationIconAttrib['type']))?$this->applicationIconAttrib['type']:'false')
+					.'","'.((isset($this->applicationIconAttrib['href']))?$this->applicationIconAttrib['href']:'false')
+					.'")': 'false');
+
+			$scripts .= ',infos:{';
+				$scripts .= 'name:"' . ((isset($this->applicationInfos['name']))?''.self::toJSDocWrite($this->applicationInfos['name']).'':'false') . '"';
+				$scripts .= ',about:"' . ((isset($this->applicationInfos['about']))?''.self::toJSDocWrite($this->applicationInfos['about']).'':'false') . '"';
+				$scripts .= ',version:"' . ((isset($this->applicationInfos['version']))?''.self::toJSDocWrite($this->applicationInfos['version']).'':'false') . '"';
+				$scripts .= '}';
+					
+		$scripts .= '});';
+		
+		
+		$this->addToBodyScriptOutPut($scripts);
+		return $this;}
+	
+	
+	
+	private function getPHPLibOutPut(){$r = '';
+		// for($x=0; $x<count($this->PHPLibOutPut); $x++){$r .= 'require "' . $this->PHPLibOutPut[$x] . '"; ';}
+		return AUNTranscript::inputToOutput($this->PHPLibOutPut, 'require __CORES_NATIVE_PHP_AUN_LIB__ . "', '.aunlib"; ');}
+		
+		
+	private function getPHPFileOutPut(){$r = '';
+		for($x=0; $x<count($this->PHPFileOutPut); $x++){$r .= 'include "' . self::serverRootVars($this->PHPFileOutPut[$x]) . '"; ';}
+		// return AUNTranscript::inputToOutput($this->PHPFileOutPut, 'include "', '"; ');
+		return $r;}
+		
+		
+	private function getJSLibOutPut(){$r = array();
+		array_push($r, $this->AUNJSFramework);
+		for($x=0; $x<count($this->JSLibOutPut); $x++){if(strtolower($this->AUNJSFramework)==strtolower($this->JSLibOutPut[$x])){continue;}array_push($r, self::writeQuotes($this->JSLibOutPut[$x]));}
+		$ret = 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="aun-js-framework-element" src="'.HTTP_HOST.'aunJSFramework?packages='. implode(',', $r) .'" ></SCRIPT>\'); ';
+		return $ret;}
+		
+	
+	
+	private function getGGJSPkgOutPut(){$r = array();
+		array_push($r, $this->GougnonJSFramework);
+		for($x=0; $x<count($this->GGJSPkgOutPut); $x++){if(strtolower($this->GougnonJSFramework)==strtolower($this->GGJSPkgOutPut[$x])){continue;}array_push($r, self::writeQuotes($this->GGJSPkgOutPut[$x]));}
+		$ret = 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="gougnon-js-framework-element" src="'.HTTP_HOST.'jsFramework?packages='. implode(',', $r) .'" ></SCRIPT>\'); ';
+		return $ret;}
+		
+		
+	private function getGGJSCodeOutPut(){$r = '';
+		for($x=0; $x<count($this->GGJSCodeOutPut); $x++){$r .= 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="gougnon-js-code-lib-element">' . self::writeQuotes(($this->GGJSCodeOutPut[$x])) . '"</SCRIPT>\'); ';}
+		return $r;}
+		
+		
+	private function getAUNPkgOutPut(){$r = '';
+		for($x=0; $x<count($this->AUNPkgOutPut); $x++){$r .= 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="aun-js-external-lib-element" src="' . self::writeQuotes(self::serverRootVars($this->AUNPkgOutPut[$x])) . '" ></SCRIPT>\'); ';}
+		return $r;}
+		
+		
+	private function getAUNCodeOutPut(){$r = '';
+		for($x=0; $x<count($this->AUNCodeOutPut); $x++){$r .= 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="aun-js-code-lib-element">' . self::writeQuotes(($this->AUNCodeOutPut[$x])) . '"</SCRIPT>\'); ';}
+		return $r;}
+		
+		
+	private function getCSSLibOutPut(){$r = array();
+		array_push($r, $this->AUNCSSFramework);
+		for($x=0; $x<count($this->CSSLibOutPut); $x++){if(strtolower($this->AUNCSSFramework)==strtolower($this->CSSLibOutPut[$x])){continue;}array_push($r, self::writeQuotes($this->CSSLibOutPut[$x]));}
+		$ret = 'self::write(\'<link rel="StyleSheet" type="text/css"  aun-element="aun-css-framework-element" href="'.HTTP_HOST.'aunCSSFramework?packages='. implode(',', $r) .'" />\'); ';
+		return $ret;}
+		
+		
+	private function getGGCSSPkgOutPut(){$r = array();
+		array_push($r, $this->GougnonCSSFramework);
+		for($x=0; $x<count($this->GGCSSPkgOutPut); $x++){if(strtolower($this->GougnonCSSFramework)==strtolower($this->GGCSSPkgOutPut[$x])){continue;}array_push($r, self::writeQuotes($this->GGCSSPkgOutPut[$x]));}
+		$ret = 'self::write(\'<link rel="StyleSheet" type="text/css"  aun-element="Gougnon-css-framework-element" href="'.HTTP_HOST.'cssframework?packages='. implode(',', $r) .'" />\'); ';
+		return $ret;}
+		
+		
+		
+	private function getCSSCodeOutPut(){$r = '';
+		for($x=0; $x<count($this->CSSCodeOutPut); $x++){$r .= (Gougnon::isEmpty($this->CSSCodeOutPut[$x]))?'':'self::write(\'<STYLE type="text/css" aun-element="css-code-element">' . self::writeQuotes(($this->CSSCodeOutPut[$x])) . '</STYLE>\'); ';}
+		return $r;}
+		
+		
+		
+	private function getHTMLLibOutPut(){$r = '';
+		for($x=0; $x<count($this->HTMLLibOutPut); $x++){$r .= 'self::write(\'<SCRIPT type="text/JavaScript"  aun-element="html-lib-element" src="\'.HTTP_HOST.\'aunHTMLCore?lib=' . self::writeQuotes(($this->HTMLLibOutPut[$x])) . '"  ></SCRIPT>\'); ';}
+		return $r;}
+		
+		
+	private function getHTMLFileOutPut(){$r = '';
+		for($x=0; $x<count($this->HTMLFileOutPut); $x++){$r .= 'self::write(\'<script type="text/JavaScript"  aun-element="html-file-element" src="' . self::writeQuotes(self::serverRootVars($this->HTMLFileOutPut[$x])) . '"  ></script>\'); ';}
+		return $r;}
+		
+		
+	private function getJSCodeOutPut(){$r = '';
+		for($x=0; $x<count($this->JSCodeOutPut); $x++){$r .= (Gougnon::isEmpty($this->JSCodeOutPut[$x]))?'':'self::write(\'<SCRIPT type="text/JavaScript" aun-element="js-code-element">' . self::writeQuotes(($this->JSCodeOutPut[$x])) . '</SCRIPT>\'); ';}
+		return $r;}
+		
+		
+	private function getBodyOutPut(){$r = '';
+		for($x=0; $x<count($this->bodyOutPut); $x++){
+			$data = (ltrim(rtrim($this->bodyOutPut[$x])));
+			if(Gougnon::isEmpty($data)){continue;}
+			// if($this->bodyOutPutMode[$x]===self::T_NTS){$r .= $data;}
+			// if($this->bodyOutPutMode[$x]===self::T_NTSC){$r .= 'self::write(\'\');' . ($data) . 'self::write(\'\');';}
+			if($this->bodyOutPutMode[$x]===self::T_NORM){$r .= 'self::write(\'' . self::writeQuotes($data) . '\'); ';}
+			// if($this->bodyOutPutMode[$x]===self::T_NRMSC){$r .= 'self::write(\'' . self::writeQuotes($data) . '\');';}
+			// if($this->bodyOutPutMode[$x]===self::T_NDCWR){$r .= 'self::write(\'' . (self::writeQuotes('document.write(\''.self::toJSDocWrite($data).'\');')) . '\');';}
+			}
+		return $r;}
+		
+		
+		
+		
+		
+	protected function getDOCTitle(){
+		return 'self::write(\'<TITLE>'.self::writeQuotes($this->docTitle).'</TITLE>\');';}
+		// return '<TITLE>'.($this->docTitle).'</TITLE>';}
+		
+	
+		
+	// private function initializeTranscription(){
+		// $this->AuthToBeTranscript('#text');
+		// $this->AuthToBeTranscript('PHPlayer');
+		// $this->AuthToBeTranscript('HTMLlayer');
+		// $this->AuthToBeTranscript('PHP');
+		// return $this;}
+		
+	// private function setTranscription(){
+		// foreach($this->mainNode->childNodes as $node){
+			// $this->transcriptionEngine($node);
+			// }
+		// return $this;}
+		
+		
+	private function initializeImports(){
+		$this->AuthToBeImoprts('AUN', self::_JSLib);
+		$this->AuthToBeImoprts('AUN.PHP', self::_PHPLib);
+		$this->AuthToBeImoprts('AUN.HTML', self::_HTMLLib);
+		$this->AuthToBeImoprts('AUN.JS', self::_JSLib);
+		$this->AuthToBeImoprts('AUN.CSS', self::_CSSLib);
+		$this->AuthToBeImoprts('Gougnon', self::_JSLib);
+		$this->AuthToBeImoprts('Gougnon.PHP', self::_PHPLib);
+		$this->AuthToBeImoprts('Gougnon.HTML', self::_CSSLib);
+		$this->AuthToBeImoprts('Gougnon.JS', self::_JSLib);
+		$this->AuthToBeImoprts('Gougnon.CSS', self::_CSSLib);
+		return $this;}
+		
+		
+	private function getFilesToImport(){
+		$imports = $this->AUN['libraries'];
+		for($imp=0; $imp<count($imports); $imp++){
+			
+			if($imports[$imp]->hasAttributes()){
+				foreach($imports[$imp]->attributes as $attr){
+					$attrName = strtoupper($attr->nodeName);
+					if($attrName==self::attrLib){
+						$libt = isset($this->toImports[strtoupper($attr->nodeValue)])?$this->toImports[strtoupper($attr->nodeValue)]: FALSE;
+							if($libt==self::_JSLib){$this->addToJSLibOutPut($attr->nodeValue);}
+							if($libt==self::_PHPLib){$this->addToPHPLibOutPut($attr->nodeValue);}
+							if($libt==self::_HTMLLib){$this->addToHTMLLibOutPut($attr->nodeValue);}
+							if($libt==self::_CSSLib){$this->addToCSSLibOutPut($attr->nodeValue);}
+						}
+					if($attrName==self::attrPHP){$this->addToPHPFileOutPut($attr->nodeValue);}
+					if($attrName==self::attrCSS){$this->addToCSSFileOutPut($attr->nodeValue);}
+					if($attrName==self::attrJS){$this->addToJSFileOutPut($attr->nodeValue);}
+					if($attrName==self::attrAUN){$this->addToAUNPkgOutPut($attr->nodeValue);}
+					if($attrName==self::attrSYSJS){$this->addToGGJSPkgOutPut($attr->nodeValue);}
+					if($attrName==self::attrSYSCSS){$this->addToGGCSSPkgOutPut($attr->nodeValue);}
+					if($attrName==self::attrHTML){$this->addToHTMLFileOutPut($attr->nodeValue);}
+					}
+				}
+			}
+		return $this;}
+		
+		
+	/* Ajouter une ligne de code pour le corps de la page  */
+	private function addToSourcesCode($data){
+		array_push($this->sourcesCode, $data);
+		}
+		
+		
+	/* Ajouter une ligne de code pour le corps de la page  */
+	private function addToBodyOutPut($data, $mode){
+		array_push($this->bodyOutPut, $data);
+		array_push($this->bodyOutPutMode, $mode);
+		}
+		
+	private function addToBodyScriptOutPut($data){
+		array_push($this->bodyOutPut, $data);
+		array_push($this->bodyOutPutMode, self::T_NORM);
+		}
+		
+		
+	/* Ajouter un fichier à charger comme librairie CSS  */
+	private function addToCSSLibOutPut($data){
+		array_push($this->CSSLibOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier à charger comme librairie HTML  */
+	private function addToHTMLLibOutPut($data){
+		array_push($this->HTMLLibOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier à charger comme librairie PHP  */
+	private function addToPHPLibOutPut($data){
+		array_push($this->PHPLibOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier à charger comme fichier PHP  */
+	private function addToPHPFileOutPut($data){
+		array_push($this->PHPFileOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier pour le CSS */
+	private function addToCSSFileOutPut($data){
+		array_push($this->CSSFileOutPut, $data);
+		}
+	
+	
+	/* Ajouter une ligne de code CSS */
+	private function addToCSSCodeOutPut($data){
+		array_push($this->CSSCodeOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier pour le JS */
+	private function addToJSFileOutPut($data){
+		array_push($this->JSFileOutPut, $data);
+		}
+		
+		
+	/* Ajouter un fichier pour la librairie JS */
+	private function addToJSLibOutPut($data){
+		array_push($this->JSLibOutPut, $data);
+		}
+		
+		
+	/* Ajouter une ligne de code JS */
+	private function addToJSCodeOutPut($data){
+		array_push($this->JSCodeOutPut, $data);
+		}
+		
+		
+	/* Ajouter un package AUN à charger  */
+	private function addToAUNPkgOutPut($data){
+		array_push($this->AUNPkgOutPut, $data);
+		}
+		
+		
+	/* Ajouter une ligne de code AUN */
+	private function addToAUNCodeOutPut($data){
+		array_push($this->AUNCodeOutPut, $data);
+		}
+		
+		
+	/* Ajouter un package GOUGNON à charger */
+	private function addToGGJSPkgOutPut($data){
+		array_push($this->GGJSPkgOutPut, $data);
+		}
+		
+		
+	/* Ajouter un package GOUGNON à charger */
+	private function addToGGCSSPkgOutPut($data){
+		array_push($this->GGCSSPkgOutPut, $data);
+		}
+		
+		
+	/* Ajouter un package GOUGNON à charger */
+	private function addToHTMLFileOutPut($data){
+		array_push($this->HTMLFileOutPut, $data);
+		}
+		
+		
+	/* Ajouter une ligne de code GOUGNON */
+	private function addToGGJSCodeOutPut($data){
+		array_push($this->GGJSCodeOutPut, $data);
+		}
+		
+		
+	// public function AuthToBeTranscript($node){
+		// $this->toTranscript[strtoupper($node)] = TRUE;
+		// }
+		
+	public function AuthToBeImoprts($lib, $mode){
+		$this->toImports[strtoupper($lib)] = $mode;
+		}
+		
+	// private function transcriptionEngine($node){
+		// if(isset($node->nodeValue) && isset($node->nodeName)){
+			// $output = array();
+			// $nodeName = strtoupper($node->nodeName);
+			// $nodeValue = ($node->nodeValue);
+			
+			// if(isset($this->toTranscript[$nodeName])){
+				// if($this->toTranscript[$nodeName]===TRUE){
+					// $output = AUNTranscript::__entries($nodeName, $node, $this);
+					// }
+				// }
+			
+			// if(count($output)<=0){}
+			// if(count($output)>0){$this->addToBodyOutPut($output[0], (isset($output[1]))?$output[1]:'');}
+			// }
+		// }
+		
+	
+
+		
+	/* Applications */
+		// /* Rechercher de l'application principale */
+	protected function getAUNVars(){
+		// $this->AUN['startOnName'] = $this->getStartOnName();
+		// $this->getApplicationsNodes();
+		// $this->AUN['startOnApp'] = $this->AUN['applicationNodeByName'][$this->AUN['startOnName']];
+			// $this->AUN['startOnApp'] = ($this->AUN['startOnApp']==NULL)?$this->AUN['applications'][0]
+				// : $this->AUN['startOnApp'];
+		// $this->AUN['startOnAppExists'] = !isset($this->AUN['startOnAppExists']);
+		return $this;}
+		
+		
+	
+	
+	protected function getAUNAttributes(){
+		$this->AUN['rootAttributes']=array();
+		if($this->AUN['root']->hasAttributes()){
+			foreach($this->AUN['root']->attributes as $attr){
+				$this->AUN['rootAttributes'][strtolower($attr->nodeName)] = $attr->nodeValue;
+				}
+			}
+		$this->AUN['appExists'] = @isset($this->AUN['rootAttributes']['application']);
+		return $this;}
+		
+		
+	
+	
+	// protected function getApplicationsNodes(){
+		// $this->AUN['applicationAttrib'] = array();
+		// $this->AUN['applicationNodeByName'] = array();
+		// // for($x=0; $x<$this->AUN['appsCount']; $x++){
+			// $x=0;
+			// $this->AUN['applicationAttrib'][$x] = array();
+			// if($this->AUN['applications'][$x]->hasAttributes()){
+				// foreach($this->AUN['applications'][$x]->attributes as $attr){
+					// $this->AUN['applicationAttrib'][$x][strtolower($attr->nodeName)] = $attr->nodeValue;
+					// if(strtolower($attr->nodeName)=='name'){
+						// $this->AUN['applicationNodeByName'][($attr->nodeValue)] = $this->AUN['applications'][$x];}
+					// }
+				// }
+			// // }
+			
+		// return $this;}
+	
+	
+		
+	
+	/* Validation du document */
+	protected function _validate(){	
+		$this->AUN['root'] = $this->dom->documentElement;
+		$this->AUN['nodeName'] = strtoupper($this->AUN['root']->nodeName);
+		$this->AUN['validate'] = $this->AUN['nodeName']==strtoupper(self::LTN);
+		return $this;}
+		
+		
+		
+	/* Rechercher des librairies importées et des applications */
+	protected function _getAppNodes(){	
+		$this->AUN['libraries'] = array();
+		$this->AUN['applications'] = array();
+		$this->AUNNodes = self::nodeScanner($this->AUN['root']);
+		// $this->AUN['applications'] = $this->AUNNodes['NODES']['APPLICATION'];
+		$this->AUN['libraries'] = isset($this->AUNNodes['NODES']['IMPORT'])?$this->AUNNodes['NODES']['IMPORT']: array();
+		
+		// $this->AUN['appsCount'] = count($this->AUN['applications']);
+		// $this->AUN['appExists'] = $this->AUN['appsCount']>0;
+		$this->AUN['libCount'] = count($this->AUN['libraries'])>0;
+		$this->AUN['libExists'] = $this->AUN['libCount']>0;
+		return $this;}
+		
+		
+		
+	/* Balise Manifest */
+	protected function _loadManifest(){
+		
+		/* Si Existe */
+		if(@isset($this->AUNNodes['NODES']['MANIFEST'][0])){
+			$this->MANIFEST = array();
+			$this->manifestNodeBrute = $this->AUNNodes['NODES']['MANIFEST'][0];
+			// $this->manifestFile = $this->path . $this->AUN['rootAttributes']['manifest'];
+			// $this->domManifest = new DOMDocument();
+			// $this->manifestLoaded = self::loadFile($this->domManifest, $this->manifestFile);
+			
+			// if($this->manifestLoaded===TRUE){
+				// $this->MANIFEST['root'] = $this->domManifest->documentElement;
+				// $this->MANIFEST['nodeName'] = strtoupper($this->MANIFEST['root']->nodeName);
+				// $this->MANIFEST['validate'] = $this->MANIFEST['nodeName']==strtoupper(self::LTN);
+				
+				$this->manifestNode = self::nodeScanner($this->manifestNodeBrute);
+					
+				$this->APP['manifest'] = (@isset($this->manifestNode))
+					?$this->manifestNode:FALSE;
+				$this->APP['title'] = (@isset($this->manifestNode['NODES']['TITLE'][0]))
+					?$this->manifestNode['NODES']['TITLE'][0]: FALSE;
+				$this->APP['splashScreen'] = (@isset($this->manifestNode['NODES']['SPLASHSCREEN'][0]))
+					?$this->manifestNode['NODES']['SPLASHSCREEN'][0]: FALSE;
+				$this->APP['Icon'] = (@isset($this->manifestNode['NODES']['ICON'][0]))
+					?$this->manifestNode['NODES']['ICON'][0]: FALSE;
+				$this->APP['infos'] = (@isset($this->manifestNode['NODES']['INFOS'][0]))
+					?$this->manifestNode['NODES']['INFOS'][0]: FALSE; 
+				
+				// }
+			$this->getApplicationNodesAttrib();
+			$this->getApplicationInfosVars();
+			}
+			
+		}
+			
+			
+	protected function getApplicationNodesAttrib(){
+		if(isset($this->APP['splashScreen'])){$this->applicationSplashScreenAttrib = self::getNodeAttributes($this->APP['splashScreen']);}
+		if(isset($this->APP['Icon'])){$this->applicationIconAttrib = self::getNodeAttributes($this->APP['Icon']);}
+		}
+			
+			
+	protected function getApplicationInfosVars(){
+		if(isset($this->APP['infos'])){
+			$this->applicationInfos = array();
+			foreach($this->APP['infos']->childNodes as $node){
+				$this->applicationInfos[strtolower($node->nodeName)] = $node->nodeValue;
+				}
+			}
+		}
+		
+	
+	
+	}
+
+	
+
+	
+?>

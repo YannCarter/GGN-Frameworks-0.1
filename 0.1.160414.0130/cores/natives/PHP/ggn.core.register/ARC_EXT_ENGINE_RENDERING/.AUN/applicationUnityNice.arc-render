@@ -1,0 +1,19 @@
+<?php
+/*
+	Copyright GOBOU Y. Yannick
+======================================================
+	CLASS applicationUnityNiceARC
+	PAGE cores/_natives/PHP/Register.core.g/ARC_ENGINE_RENDING/.AUN/applicationUsingNodes.arc-render
+======================================================
+
+	Moteur de rendu AUN(Application Unity Nice)
+	
+*/
+
+Require dirname(__FILE__) . '/applicationUnityNiceClass.arc-class';
+Require dirname(__FILE__) . '/AUNTranscript.arc-class';
+
+	$this->Render = new applicationUnityNiceARC($this->file);
+	$this->Render->startEngine();
+	
+?>

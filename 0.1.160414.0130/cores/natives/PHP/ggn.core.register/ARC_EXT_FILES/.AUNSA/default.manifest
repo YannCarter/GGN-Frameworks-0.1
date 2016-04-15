@@ -1,0 +1,29 @@
+;Gougnon Register 0.0.2
+;By GOBOU Y. Yannick
+
+[INFO]
+NAME = Application Unity Nice - Script Application
+AUTHOR = GOBOU Yohou Yannick - Gougnon.com
+AUTHOR_WEBSITE = Gougnon.com
+AUTHOR_EMAIL = qaidyann@Gougnon.com
+
+
+[CONFIG]
+;Entete
+HEADER = content-type:text/javascript
+
+;Securité
+CONTROL-ACCESS = allow from domaine
+CONTROL-ACCESS-EXCLUDES = 
+OPENED_RIGHT = 0
+
+;Dossiers
+ROOT_SRC = {%APPLICATIONS%}
+RENDERING_ENGINE = AUNScriptApplication
+EXT = .aunsa
+
+
+;Auto-gestion
+[ON]
+ERROR = error.paun?{%ERROR_CODE%}
+
